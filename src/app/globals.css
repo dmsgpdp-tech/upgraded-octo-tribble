@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #faf7f2;
+  --fg: #2b2622;
+  --card: #ffffff;
+  --muted: #7a7068;
+  --line: #e7dfd4;
+  --accent: #8c3b2e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1917;
+    --fg: #ece6de;
+    --card: #252220;
+    --muted: #a59a8f;
+    --line: #3a3531;
+    --accent: #e08b72;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+}
+
+/* AI 풀이(마크다운) 스타일 */
+.prose-saju h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0.2em 0 0.6em;
+}
+.prose-saju h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.4em 0 0.5em;
+  color: var(--accent);
+}
+.prose-saju h3 {
+  font-weight: 700;
+  margin: 1.1em 0 0.4em;
+}
+.prose-saju p {
+  margin: 0.6em 0;
+  line-height: 1.8;
+}
+.prose-saju ul,
+.prose-saju ol {
+  margin: 0.5em 0;
+  padding-left: 1.4em;
+  line-height: 1.8;
+}
+.prose-saju ul {
+  list-style: disc;
+}
+.prose-saju ol {
+  list-style: decimal;
+}
+.prose-saju strong {
+  font-weight: 700;
+}
+.prose-saju table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+}
+.prose-saju th,
+.prose-saju td {
+  border: 1px solid var(--line);
+  padding: 0.3em 0.6em;
+}

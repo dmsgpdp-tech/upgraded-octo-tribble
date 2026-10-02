@@ -1,0 +1,21 @@
+/** 진태양시 보정용 주요 도시 경도 (동경, 도) */
+export const CITIES: { name: string; longitude: number }[] = [
+  { name: "서울", longitude: 126.978 },
+  { name: "부산", longitude: 129.075 },
+  { name: "대구", longitude: 128.601 },
+  { name: "인천", longitude: 126.705 },
+  { name: "광주", longitude: 126.852 },
+  { name: "대전", longitude: 127.385 },
+  { name: "울산", longitude: 129.311 },
+  { name: "세종", longitude: 127.289 },
+  { name: "수원", longitude: 127.029 },
+  { name: "춘천", longitude: 127.73 },
+  { name: "강릉", longitude: 128.876 },
+  { name: "청주", longitude: 127.489 },
+  { name: "전주", longitude: 127.148 },
+  { name: "목포", longitude: 126.392 },
+  { name: "포항", longitude: 129.343 },
+  { name: "창원", longitude: 128.681 },
+  { name: "안동", longitude: 128.729 },
+  { name: "제주", longitude: 126.531 },
+];
