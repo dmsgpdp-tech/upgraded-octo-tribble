@@ -148,8 +148,8 @@ details .opts { display: grid; gap: 10px; margin-top: 10px; }
         <span>생년월일</span>
         <div class="row date">
           <input type="number" id="year" inputmode="numeric" placeholder="1990" aria-label="년" min="1900" max="2100">
-          <input type="number" id="month" inputmode="numeric" placeholder="월" aria-label="월" min="1" max="12">
-          <input type="number" id="day" inputmode="numeric" placeholder="일" aria-label="일" min="1" max="31">
+          <select id="month" aria-label="월"></select>
+          <select id="day" aria-label="일"></select>
         </div>
         <label class="check" id="leap-wrap" hidden><input type="checkbox" id="leap"> 윤달</label>
       </div>
@@ -409,7 +409,18 @@ details .opts { display: grid; gap: 10px; margin-top: 10px; }
   var oc = document.createElement("option"); oc.value = "__custom"; oc.textContent = "직접 입력 (경도)"; citySel.appendChild(oc);
   citySel.addEventListener("change", function () { $("lon-wrap").hidden = citySel.value !== "__custom"; });
 
+  // 월·일 선택지: 양력은 1~31일, 음력은 1~30일
+  function fillSelect(sel, max, unit) {
+    var keep = sel.value;
+    sel.innerHTML = "<option value=''>" + unit + "</option>";
+    for (var n = 1; n <= max; n++) { var o = document.createElement("option"); o.value = String(n); o.textContent = n + unit; sel.appendChild(o); }
+    if (keep && Number(keep) <= max) sel.value = keep;
+  }
+  fillSelect($("month"), 12, "월");
+  fillSelect($("day"), 31, "일");
+
   function setCalendar(c) {
+    fillSelect($("day"), c === "lunar" ? 30 : 31, "일");
     state.calendar = c;
     $("cal-solar").setAttribute("aria-pressed", String(c === "solar"));
     $("cal-lunar").setAttribute("aria-pressed", String(c === "lunar"));
