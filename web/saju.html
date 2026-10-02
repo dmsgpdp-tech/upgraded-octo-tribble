@@ -1,0 +1,606 @@
+<title>사주 한 장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column like a 명식지(사주 종이) — form, then the 4-pillar chart, then the reading */
+:root {
+  --paper: #f3f2ee;
+  --sheet: #fcfbf8;
+  --ink: #1f2330;
+  --ink-soft: #5d6272;
+  --rule: #dcd9d0;
+  --accent: #2f3f73;      /* 남색 */
+  --accent-ink: #ffffff;
+  --danger: #a5322a;
+  --wood: #2e7656; --wood-ink: #ffffff;
+  --fire: #b93a30; --fire-ink: #ffffff;
+  --earth: #c79a28; --earth-ink: #1f1a0c;
+  --metal: #e7e4dc; --metal-ink: #2a2a2a;
+  --water: #23262e; --water-ink: #f1f1f1;
+  --chip-line: rgba(0,0,0,0.08);
+  --font-display: "Gowun Batang", "AppleMyungjo", "Noto Serif KR", serif;
+  --font-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #14161d; --sheet: #1c1f28; --ink: #e8e6e0; --ink-soft: #a3a7b4; --rule: #313543;
+    --accent: #9fb0ea; --accent-ink: #11131a; --danger: #ef8a80;
+    --metal: #dcd8cf; --water: #0b0c10; --water-ink: #e9e9e9; --chip-line: rgba(255,255,255,0.18);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #14161d; --sheet: #1c1f28; --ink: #e8e6e0; --ink-soft: #a3a7b4; --rule: #313543;
+  --accent: #9fb0ea; --accent-ink: #11131a; --danger: #ef8a80;
+  --metal: #dcd8cf; --water: #0b0c10; --water-ink: #e9e9e9; --chip-line: rgba(255,255,255,0.18);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 56px; display: grid; gap: 22px; }
+
+header h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+header p { margin: 4px 0 0; color: var(--ink-soft); font-size: 0.92rem; }
+
+.sheet { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 20px; min-width: 0; }
+
+form { display: grid; gap: 16px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: transparent; color: var(--ink); padding: 10px; font: inherit; font-weight: 500; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span, .label { font-size: 0.82rem; color: var(--ink-soft); letter-spacing: 0.02em; }
+.row { display: grid; gap: 8px; }
+.row.date { grid-template-columns: 2fr 1fr 1fr; }
+.row.two { grid-template-columns: 1fr 1fr; }
+input[type="text"], input[type="number"], select {
+  width: 100%; min-width: 0; font: inherit; color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 9px 10px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input:disabled { opacity: 0.45; }
+.check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.9rem; }
+.check input { margin-top: 4px; accent-color: var(--accent); }
+.check small { color: var(--ink-soft); display: block; }
+details { border-top: 1px dashed var(--rule); padding-top: 12px; }
+summary { cursor: pointer; color: var(--ink-soft); font-size: 0.9rem; }
+details .opts { display: grid; gap: 10px; margin-top: 10px; }
+.btn { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 12px 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); font-weight: 500; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.error { color: var(--danger); font-size: 0.9rem; margin: 0; }
+
+/* 명식 */
+.meta { color: var(--ink-soft); font-size: 0.86rem; display: grid; gap: 2px; }
+.example-tag { display: inline-block; font-size: 0.75rem; letter-spacing: 0.04em; border: 1px solid var(--rule); border-radius: 999px; padding: 1px 8px; margin-left: 6px; color: var(--ink-soft); }
+.pillars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+.pillar { display: grid; gap: 6px; justify-items: center; text-align: center; }
+.pillar .name { font-size: 0.8rem; color: var(--ink-soft); }
+.pillar .god { font-size: 0.78rem; font-weight: 500; min-height: 1.2em; }
+.pillar .sub { font-size: 0.72rem; color: var(--ink-soft); line-height: 1.35; }
+.char { width: min(64px, 100%); aspect-ratio: 1; border-radius: 12px; display: grid; place-content: center; text-align: center; box-shadow: inset 0 0 0 1px var(--chip-line); }
+.char b { font-family: var(--font-display); font-size: 1.7rem; line-height: 1; font-weight: 700; }
+.char i { font-style: normal; font-size: 0.7rem; margin-top: 3px; opacity: 0.9; }
+.el-목 { background: var(--wood); color: var(--wood-ink); }
+.el-화 { background: var(--fire); color: var(--fire-ink); }
+.el-토 { background: var(--earth); color: var(--earth-ink); }
+.el-금 { background: var(--metal); color: var(--metal-ink); }
+.el-수 { background: var(--water); color: var(--water-ink); }
+.unknown { width: min(64px, 100%); height: calc(min(64px, 100%) * 2 + 6px); min-height: 120px; border: 1px dashed var(--rule); border-radius: 12px; display: grid; place-content: center; color: var(--ink-soft); font-size: 0.8rem; }
+
+.counts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.counts span { font-size: 0.82rem; padding: 2px 10px; border-radius: 999px; font-variant-numeric: tabular-nums; box-shadow: inset 0 0 0 1px var(--chip-line); }
+.notes { margin: 14px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 0.8rem; display: grid; gap: 2px; }
+
+.luck-head { margin-top: 18px; font-size: 0.88rem; font-weight: 500; }
+.luck-head small { color: var(--ink-soft); font-weight: 400; }
+.luck { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-top: 8px; }
+.luck div { flex: 0 0 auto; min-width: 54px; border: 1px solid var(--rule); border-radius: 8px; padding: 6px 4px; text-align: center; font-size: 0.74rem; }
+.luck div b { display: block; font-family: var(--font-display); font-size: 1.05rem; }
+.luck div.now { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.luck div span { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.year { margin-top: 8px; font-size: 0.8rem; color: var(--ink-soft); }
+
+/* 풀이 */
+.reading-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.reading-bar h2 { font-family: var(--font-display); font-size: 1.25rem; margin: 0; }
+.status { color: var(--ink-soft); font-size: 0.86rem; }
+.thread { display: grid; gap: 14px; }
+.msg-user { justify-self: end; max-width: 85%; background: var(--accent); color: var(--accent-ink); padding: 8px 14px; border-radius: 14px 14px 4px 14px; overflow-wrap: anywhere; }
+.msg-ai { min-width: 0; overflow-wrap: anywhere; }
+.msg-ai h1, .msg-ai h2, .msg-ai h3 { font-family: var(--font-display); line-height: 1.35; text-wrap: balance; }
+.msg-ai h1 { font-size: 1.3rem; margin: 0.2em 0 0.5em; }
+.msg-ai h2 { font-size: 1.12rem; margin: 1.3em 0 0.4em; color: var(--accent); }
+.msg-ai h3 { font-size: 1rem; margin: 1em 0 0.3em; }
+.msg-ai p { margin: 0.55em 0; line-height: 1.85; max-width: 65ch; }
+.msg-ai ul, .msg-ai ol { margin: 0.4em 0; padding-left: 1.3em; line-height: 1.8; }
+.msg-ai .tbl { overflow-x: auto; }
+.msg-ai table { border-collapse: collapse; margin: 0.6em 0; font-size: 0.9rem; }
+.msg-ai th, .msg-ai td { border: 1px solid var(--rule); padding: 4px 10px; }
+.msg-ai hr { border: 0; border-top: 1px solid var(--rule); margin: 1.2em 0; }
+.msg-err { color: var(--danger); font-size: 0.9rem; }
+.ask { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.foot { color: var(--ink-soft); font-size: 0.78rem; text-align: center; }
+
+@media (max-width: 420px) {
+  .char b { font-size: 1.4rem; }
+  .sheet { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>사주 한 장</h1>
+    <p>만세력으로 사주팔자를 계산하고, Claude가 풀이해 드려요.</p>
+  </header>
+
+  <section class="sheet" aria-label="생년월일시 입력">
+    <form id="form" novalidate>
+      <div class="seg" role="group" aria-label="달력">
+        <button type="button" id="cal-solar" aria-pressed="true">양력</button>
+        <button type="button" id="cal-lunar" aria-pressed="false">음력</button>
+      </div>
+
+      <div class="field">
+        <span>생년월일</span>
+        <div class="row date">
+          <input type="number" id="year" inputmode="numeric" placeholder="1990" aria-label="년" min="1900" max="2100">
+          <input type="number" id="month" inputmode="numeric" placeholder="월" aria-label="월" min="1" max="12">
+          <input type="number" id="day" inputmode="numeric" placeholder="일" aria-label="일" min="1" max="31">
+        </div>
+        <label class="check" id="leap-wrap" hidden><input type="checkbox" id="leap"> 윤달</label>
+      </div>
+
+      <div class="field">
+        <span>태어난 시간 (24시간제)</span>
+        <div class="row two">
+          <input type="number" id="hour" inputmode="numeric" placeholder="시 (0~23)" aria-label="시" min="0" max="23">
+          <input type="number" id="minute" inputmode="numeric" placeholder="분" aria-label="분" min="0" max="59">
+        </div>
+        <label class="check"><input type="checkbox" id="time-unknown"> 태어난 시간을 몰라요</label>
+      </div>
+
+      <div class="row two">
+        <label class="field"><span>성별</span>
+          <select id="gender"><option value="female">여성</option><option value="male">남성</option></select>
+        </label>
+        <label class="field"><span>출생지</span>
+          <select id="city"></select>
+        </label>
+      </div>
+      <label class="field" id="lon-wrap" hidden><span>출생지 경도 (동경)</span>
+        <input type="number" id="lon" step="0.01" placeholder="예: 127.50" min="120" max="135">
+      </label>
+
+      <details>
+        <summary>시간 보정 설정</summary>
+        <div class="opts">
+          <label class="check"><input type="checkbox" id="opt-solar" checked>
+            <span>진태양시 보정<small>출생지 경도에 맞춰 시간을 보정해요 (서울 약 −32분)</small></span></label>
+          <label class="check"><input type="checkbox" id="opt-dst" checked>
+            <span>서머타임 보정<small>1948~1951·1955~1960·1987~1988년 시행 기간이면 1시간 빼요</small></span></label>
+          <label class="check"><input type="checkbox" id="opt-yajasi">
+            <span>야자시 적용<small>밤 11시~자정 출생을 당일 일주로 계산해요</small></span></label>
+        </div>
+      </details>
+
+      <button class="btn" type="submit" id="submit">사주 보기</button>
+      <p class="error" id="form-error" hidden></p>
+    </form>
+  </section>
+
+  <section class="sheet" id="chart" aria-live="polite"></section>
+
+  <section class="sheet" id="reading">
+    <div class="reading-bar">
+      <h2>풀이</h2>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <span class="status" id="status"></span>
+        <button class="btn ghost" type="button" id="stop" hidden>멈추기</button>
+        <button class="btn" type="button" id="interpret">풀이 받기</button>
+      </div>
+    </div>
+    <div class="thread" id="thread" style="margin-top:14px">
+      <p class="status" id="reading-empty">위 명식을 Claude에게 보내 풀이를 받아요. 처음 한 번은 사용 허락을 물어봐요.</p>
+    </div>
+    <form class="ask" id="ask" hidden style="margin-top:14px">
+      <input type="text" id="question" placeholder="더 궁금한 점 (예: 이직은 언제가 좋을까요?)" aria-label="추가 질문" maxlength="500">
+      <button class="btn" type="submit" id="ask-btn">질문</button>
+    </form>
+  </section>
+
+  <p class="foot">풀이는 재미와 참고용이에요. 건강·돈·법률 같은 중요한 결정은 전문가와 상의하세요.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.7.7/lunar.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ───────── 간지 표 ───────── */
+  var STEMS = "甲乙丙丁戊己庚辛壬癸".split("");
+  var STEMS_KO = "갑을병정무기경신임계".split("");
+  var BRANCHES = "子丑寅卯辰巳午未申酉戌亥".split("");
+  var BRANCHES_KO = "자축인묘진사오미신유술해".split("");
+  var STEM_EL = ["목","목","화","화","토","토","금","금","수","수"];
+  var BRANCH_EL = ["수","토","목","목","토","화","화","토","금","금","토","수"];
+  var HIDDEN = { "子":["癸"], "丑":["己","癸","辛"], "寅":["甲","丙","戊"], "卯":["乙"], "辰":["戊","乙","癸"], "巳":["丙","庚","戊"],
+    "午":["丁","己"], "未":["己","丁","乙"], "申":["庚","壬","戊"], "酉":["辛"], "戌":["戊","辛","丁"], "亥":["壬","甲"] };
+  var EL_ORDER = ["목","화","토","금","수"];
+  var STAGES = ["장생","목욕","관대","건록","제왕","쇠","병","사","묘","절","태","양"];
+  var CS_START = [11, 6, 2, 9, 2, 9, 5, 0, 8, 3];
+  var CITIES = [["서울",126.978],["부산",129.075],["대구",128.601],["인천",126.705],["광주",126.852],["대전",127.385],["울산",129.311],
+    ["세종",127.289],["수원",127.029],["춘천",127.73],["강릉",128.876],["청주",127.489],["전주",127.148],["목포",126.392],
+    ["포항",129.343],["창원",128.681],["안동",128.729],["제주",126.531]];
+
+  function si(h) { return STEMS.indexOf(h); }
+  function bi(h) { return BRANCHES.indexOf(h); }
+  function stemInfo(h) { var i = si(h); return { hanja: h, hangul: STEMS_KO[i], element: STEM_EL[i], yinYang: i % 2 ? "음" : "양" }; }
+  function branchInfo(h) { var i = bi(h); return { hanja: h, hangul: BRANCHES_KO[i], element: BRANCH_EL[i], yinYang: i % 2 ? "음" : "양", hidden: HIDDEN[h] }; }
+  function gzKo(gz) { return STEMS_KO[si(gz[0])] + BRANCHES_KO[bi(gz[1])]; }
+  function tenGod(day, other) {
+    var me = si(day), o = si(other);
+    var d = (EL_ORDER.indexOf(STEM_EL[o]) - EL_ORDER.indexOf(STEM_EL[me]) + 5) % 5;
+    var same = me % 2 === o % 2;
+    return [["비견","겁재"],["식신","상관"],["편재","정재"],["편관","정관"],["편인","정인"]][d][same ? 0 : 1];
+  }
+  function branchGod(day, br) { return tenGod(day, HIDDEN[br][0]); }
+  function stage(day, br) {
+    var s = si(day), b = bi(br), st = CS_START[s];
+    return STAGES[s % 2 === 0 ? (b - st + 12) % 12 : (st - b + 12) % 12];
+  }
+
+  /* ───────── 시간 보정 (Asia/Seoul 시간대 데이터 사용) ───────── */
+  var MIN = 60000;
+  var offFmt = null;
+  try { offFmt = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Seoul", timeZoneName: "longOffset" }); } catch (e) { offFmt = null; }
+  function seoulOffset(ms) {
+    if (!offFmt) return 540;
+    var p = offFmt.formatToParts(new Date(ms)).filter(function (x) { return x.type === "timeZoneName"; })[0];
+    var m = p && p.value.match(/GMT([+-])(\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!m) return 540;
+    return (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]) + Number(m[4] || 0) / 60);
+  }
+  function stdOffset(total) { return total === 570 ? 510 : total === 600 ? 540 : total; }
+  function wallMs(w) { return Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute); }
+  function toWall(ms) { var d = new Date(ms); return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate(), hour: d.getUTCHours(), minute: d.getUTCMinutes() }; }
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function fmtWall(w) { return w.year + "-" + pad(w.month) + "-" + pad(w.day) + " " + pad(w.hour) + ":" + pad(w.minute); }
+  function correct(clock, o) {
+    var wall = wallMs(clock), utc = wall - 540 * MIN;
+    for (var i = 0; i < 3; i++) { var n = wall - seoulOffset(utc) * MIN; if (n === utc) break; utc = n; }
+    var total = seoulOffset(utc), std = stdOffset(total), dst = Math.max(0, total - std);
+    var instant = wall - (o.applyDaylightSaving ? total : std) * MIN;
+    var dayHour = o.applyTrueSolarTime ? instant + Math.round(o.longitude * 4 * MIN) : instant + std * MIN;
+    return {
+      jieqi: toWall(instant + 480 * MIN), // lunar-javascript 절기 시각은 UTC+8 기준
+      dayHour: toWall(dayHour),
+      std: std, dst: o.applyDaylightSaving ? dst : 0,
+      lonMin: o.applyTrueSolarTime ? Math.round(o.longitude * 4 - std) : 0
+    };
+  }
+  function solarOf(w) { return Solar.fromYmdHms(w.year, w.month, w.day, w.hour, w.minute, 0); }
+
+  /* ───────── 사주 계산 ───────── */
+  function InputError(msg) { this.message = msg; }
+  function resolveDate(inp) {
+    if (inp.calendar === "solar") {
+      var d = new Date(Date.UTC(inp.year, inp.month - 1, inp.day));
+      if (d.getUTCMonth() !== inp.month - 1 || d.getUTCDate() !== inp.day) throw new InputError("존재하지 않는 양력 날짜예요.");
+      return { year: inp.year, month: inp.month, day: inp.day };
+    }
+    if (inp.isLeapMonth && LunarYear.fromYear(inp.year).getLeapMonth() !== inp.month) throw new InputError(inp.year + "년에는 음력 윤" + inp.month + "월이 없어요.");
+    var s;
+    try { s = Lunar.fromYmdHms(inp.year, inp.isLeapMonth ? -inp.month : inp.month, inp.day, 12, 0, 0).getSolar(); }
+    catch (e) { throw new InputError("존재하지 않는 음력 날짜예요."); }
+    var back = s.getLunar();
+    if (Math.abs(back.getMonth()) !== inp.month || back.getDay() !== inp.day) throw new InputError("존재하지 않는 음력 날짜예요. (그 달은 29일까지일 수 있어요)");
+    return { year: s.getYear(), month: s.getMonth(), day: s.getDay() };
+  }
+  function pillar(gz, dayStem, isDay) {
+    var s = stemInfo(gz[0]), b = branchInfo(gz[1]);
+    return {
+      hanja: gz, hangul: s.hangul + b.hangul,
+      stem: Object.assign(s, { tenGod: isDay ? "일간" : tenGod(dayStem, gz[0]) }),
+      branch: { hanja: b.hanja, hangul: b.hangul, element: b.element, yinYang: b.yinYang, tenGod: branchGod(dayStem, gz[1]),
+        hiddenStems: b.hidden.map(function (h) { return stemInfo(h).hangul; }), twelveStage: stage(dayStem, gz[1]) }
+    };
+  }
+  function calculate(inp, now) {
+    if (inp.year < 1900 || inp.year > 2100) throw new InputError("1900년부터 2100년 사이만 계산할 수 있어요.");
+    var known = inp.hour !== null;
+    var date = resolveDate(inp);
+    var clock = { year: date.year, month: date.month, day: date.day, hour: known ? inp.hour : 12, minute: known ? inp.minute : 0 };
+    var c = correct(clock, inp);
+
+    var jq = solarOf(c.jieqi).getLunar().getEightChar();
+    var dh = solarOf(c.dayHour).getLunar().getEightChar();
+    dh.setSect(inp.useYaJaSi ? 2 : 1);
+    var dayGz = dh.getDay(), dayStem = dayGz[0];
+    var pillars = {
+      year: pillar(jq.getYear(), dayStem), month: pillar(jq.getMonth(), dayStem),
+      day: pillar(dayGz, dayStem, true), hour: known ? pillar(dh.getTime(), dayStem) : null
+    };
+    var count = { 목: 0, 화: 0, 토: 0, 금: 0, 수: 0 };
+    [pillars.year, pillars.month, pillars.day, pillars.hour].forEach(function (p) { if (p) { count[p.stem.element]++; count[p.branch.element]++; } });
+
+    var yun = jq.getYun(inp.gender === "male" ? 1 : 0, 2);
+    var luck = yun.getDaYun(11).slice(1).map(function (d) {
+      var gz = d.getGanZhi();
+      return { ganzhi: gzKo(gz), hanja: gz, startAge: d.getStartAge(), endAge: d.getEndAge(), startYear: d.getStartYear(), endYear: d.getEndYear(),
+        stemTenGod: tenGod(dayStem, gz[0]), branchTenGod: branchGod(dayStem, gz[1]) };
+    });
+    var thisYear = now.getFullYear();
+    var ygz = Solar.fromYmdHms(thisYear, 6, 1, 12, 0, 0).getLunar().getYearInGanZhiExact();
+    var current = luck.filter(function (p) { return p.startYear <= thisYear && thisYear <= p.endYear; })[0] || null;
+
+    var notes = [];
+    if (!known) notes.push("태어난 시간을 몰라 시주 없이 계산했어요. (년·월·일주는 정오 기준)");
+    if (c.dst > 0) notes.push("출생 당시 서머타임 시행 중이라 " + c.dst + "분을 뺐어요.");
+    if (c.std === 510) notes.push("출생 당시 한국 표준시는 UTC+8:30(동경 127.5° 기준)이었어요.");
+    if (known && inp.applyTrueSolarTime) notes.push(inp.placeName + "(동경 " + inp.longitude.toFixed(2) + "°) 기준 진태양시로 " + c.lonMin + "분 보정했어요.");
+    if (known) notes.push(inp.useYaJaSi ? "야자시 적용: 밤 11시~자정 출생은 일주를 당일로 유지해요." : "밤 11시부터는 다음 날 일주로 계산해요. (야자시 미적용)");
+
+    var lunarNoon = Solar.fromYmdHms(date.year, date.month, date.day, 12, 0, 0).getLunar();
+    var lm = lunarNoon.getMonth();
+    var used = solarOf(c.dayHour);
+    return {
+      input: inp,
+      solarDate: "양력 " + date.year + "년 " + date.month + "월 " + date.day + "일",
+      lunarDate: "음력 " + lunarNoon.getYear() + "년 " + (lm < 0 ? "윤" : "") + Math.abs(lm) + "월 " + lunarNoon.getDay() + "일",
+      timeCorrection: {
+        clockTime: known ? fmtWall(clock) : null,
+        usedTime: known ? fmtWall({ year: used.getYear(), month: used.getMonth(), day: used.getDay(), hour: used.getHour(), minute: used.getMinute() }) : null,
+        standardOffsetMinutes: c.std, daylightSavingMinutes: c.dst, longitudeMinutes: c.lonMin, notes: notes
+      },
+      pillars: pillars,
+      dayMaster: stemInfo(dayStem),
+      elementCount: count,
+      luck: { forward: yun.isForward(), startDescription: yun.getStartYear() + "년 " + yun.getStartMonth() + "개월 " + yun.getStartDay() + "일", pillars: luck, current: current },
+      currentYear: { year: thisYear, ganzhi: gzKo(ygz), hanja: ygz, stemTenGod: tenGod(dayStem, ygz[0]), branchTenGod: branchGod(dayStem, ygz[1]), koreanAge: thisYear - date.year + 1 }
+    };
+  }
+
+  /* ───────── 작은 마크다운 렌더러 (한국어 굵은 글씨 대응) ───────── */
+  function esc(s) { return s.replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function inline(s) {
+    return esc(s)
+      .replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, "$1<em>$2</em>")
+      .replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  }
+  function md(src) {
+    var lines = src.replace(/\r/g, "").split("\n"), out = [], i = 0, para = [];
+    function flush() { if (para.length) { out.push("<p>" + inline(para.join(" ")) + "</p>"); para = []; } }
+    while (i < lines.length) {
+      var l = lines[i], m;
+      if (!l.trim()) { flush(); i++; continue; }
+      if ((m = l.match(/^(#{1,4})\s+(.*)$/))) { flush(); var lv = Math.min(3, m[1].length); out.push("<h" + lv + ">" + inline(m[2]) + "</h" + lv + ">"); i++; continue; }
+      if (/^\s*(-{3,}|\*{3,})\s*$/.test(l)) { flush(); out.push("<hr>"); i++; continue; }
+      if (/^\s*\|.*\|\s*$/.test(l)) {
+        flush(); var rows = [];
+        while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) { rows.push(lines[i]); i++; }
+        var cells = rows.filter(function (r) { return !/^\s*\|[\s:|-]+\|\s*$/.test(r); }).map(function (r) { return r.trim().slice(1, -1).split("|").map(function (c) { return c.trim(); }); });
+        var html = "<div class='tbl'><table>" + cells.map(function (r, ri) { var t = ri === 0 ? "th" : "td"; return "<tr>" + r.map(function (c) { return "<" + t + ">" + inline(c) + "</" + t + ">"; }).join("") + "</tr>"; }).join("") + "</table></div>";
+        out.push(html); continue;
+      }
+      if (/^\s*([-*•]|\d+[.)])\s+/.test(l)) {
+        flush(); var ordered = /^\s*\d+[.)]\s+/.test(l), items = [];
+        while (i < lines.length && /^\s*([-*•]|\d+[.)])\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*([-*•]|\d+[.)])\s+/, "")); i++; }
+        var tag = ordered ? "ol" : "ul";
+        out.push("<" + tag + ">" + items.map(function (t) { return "<li>" + inline(t) + "</li>"; }).join("") + "</" + tag + ">");
+        continue;
+      }
+      para.push(l.trim()); i++;
+    }
+    flush();
+    return out.join("");
+  }
+
+  /* ───────── 화면 ───────── */
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { calendar: "solar", saju: null, isExample: true, turns: [], ctl: null, busy: false, sample: undefined };
+
+  var citySel = $("city");
+  CITIES.forEach(function (c) { var o = document.createElement("option"); o.value = c[0]; o.textContent = c[0]; citySel.appendChild(o); });
+  var oc = document.createElement("option"); oc.value = "__custom"; oc.textContent = "직접 입력 (경도)"; citySel.appendChild(oc);
+  citySel.addEventListener("change", function () { $("lon-wrap").hidden = citySel.value !== "__custom"; });
+
+  function setCalendar(c) {
+    state.calendar = c;
+    $("cal-solar").setAttribute("aria-pressed", String(c === "solar"));
+    $("cal-lunar").setAttribute("aria-pressed", String(c === "lunar"));
+    $("leap-wrap").hidden = c !== "lunar";
+  }
+  $("cal-solar").addEventListener("click", function () { setCalendar("solar"); });
+  $("cal-lunar").addEventListener("click", function () { setCalendar("lunar"); });
+  $("time-unknown").addEventListener("change", function (e) { $("hour").disabled = e.target.checked; $("minute").disabled = e.target.checked; });
+
+  function readForm() {
+    var num = function (id) { var v = $(id).value.trim(); return v === "" ? NaN : Number(v); };
+    var y = num("year"), m = num("month"), d = num("day");
+    if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d) || m < 1 || m > 12 || d < 1 || d > 31) throw new InputError("생년월일을 숫자로 입력해 주세요.");
+    var unknown = $("time-unknown").checked, h = null, mi = null;
+    if (!unknown) {
+      h = num("hour"); mi = $("minute").value.trim() === "" ? 0 : num("minute");
+      if (!Number.isInteger(h) || h < 0 || h > 23) throw new InputError("시는 0부터 23 사이로 입력해 주세요. 모르면 '태어난 시간을 몰라요'를 체크하세요.");
+      if (!Number.isInteger(mi) || mi < 0 || mi > 59) throw new InputError("분은 0부터 59 사이로 입력해 주세요.");
+    }
+    var custom = citySel.value === "__custom", lon;
+    if (custom) { lon = num("lon"); if (!(lon >= 120 && lon <= 135)) throw new InputError("경도는 동경 120°~135° 사이로 입력해 주세요."); }
+    else lon = CITIES.filter(function (c) { return c[0] === citySel.value; })[0][1];
+    return {
+      calendar: state.calendar, isLeapMonth: state.calendar === "lunar" && $("leap").checked,
+      year: y, month: m, day: d, hour: h, minute: mi, gender: $("gender").value,
+      longitude: lon, placeName: custom ? "직접 입력" : citySel.value,
+      applyTrueSolarTime: $("opt-solar").checked, applyDaylightSaving: $("opt-dst").checked, useYaJaSi: $("opt-yajasi").checked
+    };
+  }
+
+  function charHtml(x) { return "<div class='char el-" + x.element + "'><b>" + x.hanja + "</b><i>" + x.hangul + "·" + x.element + "</i></div>"; }
+  function pillarHtml(name, p) {
+    if (!p) return "<div class='pillar'><div class='name'>" + name + "</div><div class='god'></div><div class='unknown'>시간 모름</div></div>";
+    return "<div class='pillar'><div class='name'>" + name + "</div><div class='god'>" + p.stem.tenGod + "</div>" + charHtml(p.stem) + charHtml(p.branch) +
+      "<div class='god'>" + p.branch.tenGod + "</div><div class='sub'>" + p.branch.hiddenStems.join(" ") + "<br>" + p.branch.twelveStage + "</div></div>";
+  }
+  function renderChart() {
+    var s = state.saju, tc = s.timeCorrection, inp = s.input;
+    var who = (inp.gender === "male" ? "남성" : "여성") + " · " + inp.placeName;
+    var h = "<div class='meta'><div><strong style='color:var(--ink)'>" + s.solarDate + "</strong> · " + s.lunarDate +
+      (state.isExample ? "<span class='example-tag'>예시</span>" : "") + "</div><div>" + who +
+      (tc.clockTime ? " · 입력 " + tc.clockTime.slice(11) + " → 계산 " + tc.usedTime.slice(11) + (tc.usedTime.slice(0, 10) !== tc.clockTime.slice(0, 10) ? " (" + tc.usedTime.slice(0, 10) + ")" : "") : " · 시간 모름") + "</div></div>";
+    h += "<div class='pillars'>" + pillarHtml("시주", s.pillars.hour) + pillarHtml("일주", s.pillars.day) + pillarHtml("월주", s.pillars.month) + pillarHtml("년주", s.pillars.year) + "</div>";
+    h += "<div class='counts'>" + EL_ORDER.map(function (e) { return "<span class='el-" + e + "'>" + e + " " + s.elementCount[e] + "</span>"; }).join("") + "</div>";
+    if (tc.notes.length) h += "<ul class='notes'>" + tc.notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul>";
+    var y = s.currentYear.year;
+    h += "<div class='luck-head'>대운 <small>(" + (s.luck.forward ? "순행" : "역행") + ", 대운수 " + s.luck.startDescription + ")</small></div><div class='luck'>" +
+      s.luck.pillars.map(function (p) { return "<div class='" + (p.startYear <= y && y <= p.endYear ? "now" : "") + "'><span>" + p.startAge + "세</span><b>" + p.hanja + "</b>" + p.ganzhi + "</div>"; }).join("") + "</div>";
+    h += "<div class='year'>" + y + "년 세운 " + s.currentYear.hanja + "(" + s.currentYear.ganzhi + ") · 한국 나이 " + s.currentYear.koreanAge + "세</div>";
+    $("chart").innerHTML = h;
+  }
+
+  function resetReading() {
+    if (state.ctl) state.ctl.abort();
+    state.turns = [];
+    $("thread").innerHTML = state.sample === null ? "" : "<p class='status' id='reading-empty'>위 명식을 Claude에게 보내 풀이를 받아요. 처음 한 번은 사용 허락을 물어봐요.</p>";
+    $("ask").hidden = true;
+    $("interpret").hidden = state.sample === null;
+    $("interpret").textContent = "풀이 받기";
+    $("status").textContent = state.sample === null ? "이 화면에서는 Claude 풀이를 쓸 수 없어요. claude.ai에서 열어 주세요." : "";
+  }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    $("form-error").hidden = true;
+    try {
+      state.saju = calculate(readForm(), new Date());
+      state.isExample = false;
+      renderChart();
+      resetReading();
+      $("chart").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    } catch (err) {
+      $("form-error").textContent = err instanceof InputError ? err.message : "계산 중 문제가 생겼어요: " + (err && err.message);
+      $("form-error").hidden = false;
+    }
+  });
+
+  /* ───────── Claude 풀이 ───────── */
+  var RULES = [
+    "당신은 따뜻하고 통찰력 있는 한국 명리학(사주) 해설가입니다.",
+    "- 사주 데이터는 만세력 프로그램이 이미 정확히 계산했습니다. 간지·십신·대운을 다시 계산하거나 바꾸지 말고 주어진 값만 근거로 풀이하세요.",
+    "- pillars.hour가 null이면 태어난 시간을 모르는 것입니다. 시주 없이 풀이하고 그 한계를 짧게 언급하세요.",
+    "- 한국어로 쉽게 쓰고, 전문 용어(편관, 식신 등)는 괄호로 뜻을 짧게 풀어 주세요.",
+    "- 마크다운(## 소제목, **굵게**, 목록)으로 읽기 좋게 쓰세요.",
+    "- 겁주거나 단정하는 표현은 피하고 주의점은 조언으로 말하세요. 건강·법률·투자는 사주만으로 판단하지 말라고 필요할 때 덧붙이세요."
+  ].join("\n");
+
+  function firstPrompt(s) {
+    var inp = s.input;
+    var data = Object.assign({ 성별: inp.gender === "male" ? "남" : "여", 출생지: inp.placeName }, s);
+    delete data.input;
+    return RULES + "\n\n다음은 한 사람의 사주 계산 결과입니다.\n\n```json\n" + JSON.stringify(data, null, 1) + "\n```\n\n" +
+      "아래 순서로 풀이해 주세요.\n## 1. 한눈에 보는 사주 (3~4문장)\n## 2. 타고난 성격과 기질 (장점과 약점)\n## 3. 오행의 균형 (많은·부족한 오행과 보완 방법)\n" +
+      "## 4. 적성과 일\n## 5. 대운의 흐름 (현재 대운 current 중심)\n## 6. " + s.currentYear.year + "년 운세\n## 7. 한마디 조언";
+  }
+
+  var ERR = {
+    not_granted: "Claude 사용이 허락되지 않았어요. 페이지를 새로 열면 다시 물어봐요.",
+    sampling_disabled: "이 계정에서는 Claude를 쓸 수 없어요.",
+    rate_limited: "사용량이 많아요. 잠시 후 다시 눌러 주세요.",
+    session_expired: "claude.ai에 다시 로그인해 주세요.",
+    refused: "이 요청에는 답할 수 없다고 해요. 질문을 바꿔 보세요.",
+    empty_completion: "답이 비어 있어요. 다시 시도해 주세요.",
+    prompt_too_large: "대화가 너무 길어졌어요. '사주 보기'를 다시 눌러 새로 시작해 주세요."
+  };
+  var HIDE = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+
+  function setBusy(b) {
+    state.busy = b;
+    $("stop").hidden = !b;
+    $("interpret").disabled = b;
+    $("ask-btn").disabled = b;
+    $("question").disabled = b;
+    $("submit").disabled = b;
+  }
+
+  function ask(turnText, isFirst) {
+    var sample = state.sample;
+    if (sample === undefined) { $("status").textContent = "준비 중이에요. 잠시 후 다시 눌러 주세요."; return; }
+    if (!sample || state.busy) return;
+    var empty = $("reading-empty"); if (empty) empty.remove();
+    if (!isFirst) { var u = document.createElement("div"); u.className = "msg-user"; u.textContent = turnText; $("thread").appendChild(u); }
+    var bubble = document.createElement("div"); bubble.className = "msg-ai"; bubble.innerHTML = "<p class='status'>생각하는 중… (처음엔 30초쯤 걸릴 수 있어요)</p>";
+    $("thread").appendChild(bubble);
+    state.turns.push({ role: "user", content: turnText });
+    var ctl = new AbortController(); state.ctl = ctl;
+    setBusy(true);
+    $("status").textContent = "";
+    var turns = state.turns.slice(-13);
+    if (turns[0] !== state.turns[0]) turns.unshift(state.turns[0]);
+    sample(turns, {
+      signal: ctl.signal, cache: isFirst ? true : false,
+      onText: function (u) { bubble.innerHTML = md(u.text); }
+    }).then(function (r) {
+      bubble.innerHTML = md(r.text);
+      state.turns.push({ role: "assistant", content: r.text });
+      if (r.truncated) $("status").textContent = "답이 길어 중간에 끊겼어요.";
+      $("ask").hidden = false;
+      $("interpret").textContent = "다시 풀이";
+    }).catch(function (e) {
+      var code = e && e.code;
+      state.turns.pop();
+      if (e && e.text) bubble.innerHTML = md(e.text); else bubble.remove();
+      if (e && e.text) state.turns.push({ role: "user", content: turnText }, { role: "assistant", content: e.text });
+      if (code === "cancelled") { $("status").textContent = "멈췄어요."; }
+      else if (HIDE.indexOf(code) >= 0) { $("interpret").hidden = true; $("ask").hidden = true; $("status").textContent = ERR[code] || "이 화면에서는 Claude 풀이를 쓸 수 없어요."; }
+      else {
+        var p = document.createElement("p"); p.className = "msg-err"; p.textContent = ERR[code] || "연결 문제로 풀이가 끊겼어요. 다시 시도해 주세요.";
+        $("thread").appendChild(p);
+      }
+      if (state.turns.length > 1) $("ask").hidden = false;
+    }).finally(function () { if (state.ctl === ctl) state.ctl = null; setBusy(false); });
+  }
+
+  $("interpret").addEventListener("click", function () {
+    if (!state.saju) return;
+    if (state.ctl) state.ctl.abort();
+    state.turns = [];
+    $("thread").innerHTML = "";
+    $("ask").hidden = true;
+    ask(firstPrompt(state.saju), true);
+  });
+  $("stop").addEventListener("click", function () { if (state.ctl) state.ctl.abort(); });
+  $("ask").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var q = $("question").value.trim();
+    if (!q) return;
+    $("question").value = "";
+    ask(q, false);
+  });
+
+  /* ───────── 시작: 예시 명식으로 채워서 보여주기 ───────── */
+  function boot() {
+    if (typeof Solar === "undefined") {
+      $("chart").innerHTML = "<p class='error'>만세력 라이브러리를 불러오지 못했어요. 네트워크를 확인하고 새로고침해 주세요.</p>";
+      $("submit").disabled = true;
+      return;
+    }
+    $("year").value = "1990"; $("month").value = "5"; $("day").value = "15"; $("hour").value = "14"; $("minute").value = "30";
+    try {
+      state.saju = calculate(readForm(), new Date());
+      state.isExample = true;
+      renderChart();
+    } catch (e) { $("chart").innerHTML = "<p class='error'>" + esc(String(e.message || e)) + "</p>"; }
+  }
+  boot();
+
+  if (window.claude && window.claude.use) {
+    window.claude.use("sample").then(function (s) { state.sample = s; if (!s) resetReading(); }).catch(function () { state.sample = null; resetReading(); });
+  } else {
+    state.sample = null; resetReading();
+  }
+})();
+</script>
